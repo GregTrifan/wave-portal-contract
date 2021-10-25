@@ -19,7 +19,12 @@ contract WavePortal {
     /*
      * A little magic, Google what events are in Solidity!
      */
-    event NewWave(address indexed from, uint256 timestamp, string message);
+    event NewWave(
+        address indexed from,
+        uint256 timestamp,
+        string message,
+        bool winner
+    );
 
     /*
      * I created a struct here named Wave.
@@ -29,6 +34,7 @@ contract WavePortal {
         address waver; // The address of the user who waved.
         string message; // The message the user sent.
         uint256 timestamp; // The timestamp when the user waved.
+        bool winner; // If the user wave is a winner or not
     }
 
     /*
@@ -64,11 +70,6 @@ contract WavePortal {
         console.log("%s has waved!", msg.sender);
 
         /*
-         * This is where I actually store the wave data in the array.
-         */
-        waves.push(Wave(msg.sender, _message, block.timestamp));
-
-        /*
          * Generate a Psuedo random number between 0 and 100
          */
         uint256 randomNumber = (block.difficulty + block.timestamp + seed) %
@@ -97,12 +98,15 @@ contract WavePortal {
             (bool success, ) = (msg.sender).call{value: prizeAmount}("");
             require(success, "Failed to withdraw money from contract.");
         }
-
+        bool isWinner = randomNumber < 50;
         /*
-         * I added some fanciness here, Google it and try to figure out what it is!
-         * Let me know what you learn in #general-chill-chat
+         * This is where I actually store the wave data in the array.
          */
-        emit NewWave(msg.sender, block.timestamp, _message);
+        waves.push(Wave(msg.sender, _message, block.timestamp, isWinner));
+        /*
+         * Emit an event that can be listened from the client
+         */
+        emit NewWave(msg.sender, block.timestamp, _message, isWinner);
     }
 
     /*
